@@ -1,14 +1,22 @@
 package com.example.fin_mangement.controller;
 
+import com.example.fin_mangement.dto.AuthRequest;
+import com.example.fin_mangement.dto.AuthResponse;
 import com.example.fin_mangement.entity.User;
 import com.example.fin_mangement.repository.UserRepository;
 import com.example.fin_mangement.service.CustomUserDetailsService;
 import com.example.fin_mangement.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -28,24 +36,19 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestParam String username, @RequestParam String password) {
-        Map<String, String> response = new HashMap<>();
-
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest){
         try {
-            // 사용자 인증
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authRequest.getUsername(),authRequest.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 사용자 세부 정보 로드
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+            final String jwt = jwtUtil.generateToken(userDetails);
 
-            // JWT 토큰 생성
-            String token = jwtUtil.generateToken(userDetails);
-            response.put("token", token);
-
-        } catch (AuthenticationException e) {
-            response.put("error", "Invalid username or password");
+            return ResponseEntity.ok(new AuthResponse(jwt));
+        }catch (BadCredentialsException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
-
-        return response;
     }
 }
