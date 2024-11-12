@@ -2,6 +2,7 @@ package com.example.fin_mangement.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,6 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @Data
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class User {
 

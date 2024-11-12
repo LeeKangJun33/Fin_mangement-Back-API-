@@ -43,7 +43,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/", "/auth/**", "/error").permitAll()  // 기본 페이지, 인증 엔드포인트, 에러 페이지는 모두 허용
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
@@ -54,13 +54,14 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOriginPatterns("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
