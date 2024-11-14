@@ -1,48 +1,41 @@
-// 거래 내역 데이터를 가져와서 차트를 생성하는 함수
-function renderExpenseChart() {
-    fetch('/transactions')
-        .then(response => response.json())
-        .then(transactions => {
-            // 카테고리별 지출 합계 계산
-            const expenseData = {};
-            transactions.forEach(transaction => {
-                const category = transaction.category || '기타';
-                const amount = parseFloat(transaction.amount);
-                if (expenseData[category]) {
-                    expenseData[category] += amount;
-                } else {
-                    expenseData[category] = amount;
-                }
-            });
+document.addEventListener("DOMContentLoaded", async () => {
+    const ctx = document.getElementById("myChart").getContext("2d");
 
-            // 차트를 렌더링할 캔버스 요소
-            const ctx = document.getElementById('expenseChart').getContext('2d');
+    try {
+        const token = localStorage.getItem("jwtToken");
+        const response = await fetch("http://localhost:8080/api/budget-goals", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
             new Chart(ctx, {
-                type: 'pie',
+                type: "bar",
                 data: {
-                    labels: Object.keys(expenseData),
+                    labels: data.map(goal => goal.category),
                     datasets: [{
-                        data: Object.values(expenseData),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40'
-                        ]
+                        label: "Budget Goals",
+                        data: data.map(goal => goal.amount),
+                        backgroundColor: "rgba(75, 192, 192, 0.2)",
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: '카테고리별 지출 비율'
+                    scales: {
+                        y: { beginAtZero: true }
                     }
                 }
             });
-        });
-}
-
-// 페이지 로드 시 차트를 렌더링
-document.addEventListener('DOMContentLoaded', renderExpenseChart);
+        } else {
+            console.error("Failed to fetch budget goals");
+        }
+    } catch (error) {
+        console.error("Error loading chart:", error);
+    }
+});
