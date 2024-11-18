@@ -1,25 +1,25 @@
-document.getElementById("loginForm").addEventListener("submit", async (event) => {
+document.getElementById("registerForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value;
 
     try {
-        const response = await fetch("http://localhost:8080/auth/login", {
+        const response = await fetch("http://localhost:8080/auth/register", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, email }),
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem("jwtToken", data.token);
-            window.location.href = "/index.html";
+            console.log("Registration successful");
+            window.location.href = "/auth/login.html";
         } else {
-            console.error("Login failed.");
+            console.error("Registration failed.");
         }
     } catch (error) {
-        console.error("Error during login:", error);
+        console.error("Error during registration:", error);
     }
 });

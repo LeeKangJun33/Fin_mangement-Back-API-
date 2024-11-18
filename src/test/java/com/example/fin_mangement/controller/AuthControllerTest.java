@@ -5,8 +5,11 @@ import com.example.fin_mangement.dto.AuthResponse;
 import com.example.fin_mangement.service.CustomUserDetailsService;
 import com.example.fin_mangement.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,17 +18,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class AuthControllerTest {
+@WebMvcTest(AuthController.class)
+class AuthControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -39,30 +44,35 @@ public class AuthControllerTest {
     @MockBean
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private AuthController authController;
+
+    private String testUsername = "testuser";
+    private String testPassword = "testpassword";
+    private String jwtToken = "dummyJwtToken";
+
+    @BeforeEach
+    void setUp() {
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn(testUsername);
+        when(jwtUtil.generateToken(testUsername)).thenReturn(jwtToken);
+    }
 
     @Test
-    @DisplayName("Test 성공, 로그인 JWT 생성")
-    public void testLogin() throws Exception {
-        // Arrange
-        AuthRequest authRequest = AuthRequest.builder()
-                .username("testuser")
-                .password("testpassword")
-                .build();
-        AuthResponse authResponse = AuthResponse.builder()
-                .token("fake-jwt-token")
-                .build();
+    void testCreateAuthenticationToken() throws Exception {
+        AuthRequest authRequest = new AuthRequest();
+        authRequest.setUsername(testUsername);
+        authRequest.setPassword(testPassword);
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(new UsernamePasswordAuthenticationToken("testuser", "testpassword"));
-        when(jwtUtil.generateToken(any())).thenReturn("fake-jwt-token");
+        when(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(testUsername, testPassword)))
+                .thenReturn(new UsernamePasswordAuthenticationToken(testUsername, testPassword));
 
-        // Act & Assert
-        mockMvc.perform(post("/auth/login")
+        when(userDetailsService.loadUserByUsername(testUsername)).thenReturn(mock(UserDetails.class));
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(authRequest)))
+                        .content("{\"username\": \"" + testUsername + "\", \"password\": \"" + testPassword + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value(authResponse.getToken())); // 수정
+                .andExpect(jsonPath("$.jwt").value(jwtToken));
     }
 }

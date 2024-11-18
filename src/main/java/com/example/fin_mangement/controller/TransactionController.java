@@ -5,10 +5,14 @@ import com.example.fin_mangement.repository.TransactionRepository;
 import com.example.fin_mangement.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,63 +22,44 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransactionController {
 
+    private final TransactionService transactionService;
 
-    private TransactionRepository transactionRepository;
-
-    // 월별 지출 요약
-    @GetMapping("/monthly-expense")
-    @PreAuthorize("isAuthenticated()")
-    public Map<String, Object> getMonthlyExpense(Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
-        List<Transaction> transactions = transactionRepository.findByUserId(userId);
-
-        Map<String, Double> monthlyExpenses = new HashMap<>();
-        for (Transaction transaction : transactions) {
-            String month = transaction.getDate().getMonth().getDisplayName(TextStyle.SHORT, Locale.getDefault());
-            monthlyExpenses.put(month, monthlyExpenses.getOrDefault(month, 0.0) + transaction.getAmount());
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("labels", new ArrayList<>(monthlyExpenses.keySet()));
-        response.put("values", new ArrayList<>(monthlyExpenses.values()));
-        return response;
-    }
-    // 카테고리별 지출 분포
-    @GetMapping("/category-expense")
-    @PreAuthorize("isAuthenticated()")
-    public Map<String, Object> getCategoryExpense(Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
-        List<Transaction> transactions = transactionRepository.findByUserId(userId);
-
-        Map<String, Double> categoryExpenses = transactions.stream()
-                .collect(Collectors.groupingBy(Transaction::getCategory, Collectors.summingDouble(Transaction::getAmount)));
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("labels", new ArrayList<>(categoryExpenses.keySet()));
-        response.put("values", new ArrayList<>(categoryExpenses.values()));
-        return response;
-    }
-
+    private final TransactionRepository transactionRepository;
 
     // 거래 추가
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public String addTransaction(@RequestBody Transaction transaction, Principal principal) {
+    public ResponseEntity<String> addTransaction(@RequestBody Map<String, Object> request, Principal principal) {
         Long userId = Long.parseLong(principal.getName());
-        transaction.setUserId(userId);
-        transactionRepository.save(transaction);
-        return "거래가 추가되었습니다!";
+        String description = (String) request.get("description");
+        double amount = Double.parseDouble(request.get("amount").toString());
+        String category = (String) request.get("category");
+        LocalDateTime date = LocalDateTime.parse((String) request.get("date"));
+
+        transactionService.addTransaction(userId, description, amount, date, category);
+        return ResponseEntity.ok("거래가 성공적으로 추가되었습니다!");
     }
 
-    // 모든 거래 조회
+    // 사용자별 거래 조회
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<Transaction> getAllTransactions(Principal principal) {
-        if(principal == null){
-            throw new RuntimeException("User is not authenticated");
+    public List<Transaction> getUserTransactions(Principal principal) {
+        // Principal로부터 userId를 가져옴
+        Long userId;
+        try {
+            userId = (Long) ((UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
+        } catch (ClassCastException | NullPointerException e) {
+            throw new RuntimeException("Invalid Principal configuration", e);
         }
-        Long userId = Long.parseLong(principal.getName());
         return transactionRepository.findByUserId(userId);
     }
 
+
+    // 모든 거래 조회 (관리자 전용)
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Transaction> getAllTransactionsForAdmin() {
+        return transactionRepository.findAll();
+    }
+
 }
+

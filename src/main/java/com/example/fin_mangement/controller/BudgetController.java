@@ -1,38 +1,40 @@
 package com.example.fin_mangement.controller;
 
+import com.example.fin_mangement.dto.BudgetDto;
 import com.example.fin_mangement.entity.Budget;
 import com.example.fin_mangement.repository.BudgetRepository;
+import com.example.fin_mangement.service.BudgetService;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
+@Data
 @RequestMapping("/api/budget")
 public class BudgetController {
 
-    @Autowired
-    private BudgetRepository budgetRepository;
+   private final BudgetService budgetService;
 
-    //예산설정(인증필요)
+
+    // 예산 추가
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public String setBudget(@RequestParam double amount, Principal principal) {
-        Budget budget = new Budget();
-        budget.setAmount(amount);
-        budget.setUserId(principal.getName()); //로그인한 사용자 Id
-        budgetRepository.save(budget);
-        return "예산이 설정되었습니다." + amount;
+    public ResponseEntity<String> addBudget(@RequestBody BudgetDto budgetDto, Authentication authentication) {
+        String username = authentication.getName(); // 현재 인증된 사용자의 이름
+        budgetService.addBudget(budgetDto, username);
+        return ResponseEntity.ok("Budget added successfully!");
     }
 
-    //예산조회
-    // findTopByOrderByCreatedAtDesc 는 여러 설정 내역이 있을경ㅇ 가장 최근에 설정한 예산을 가져오기위한 메서드
+    // 사용자의 모든 예산 조회
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public double getBudget() {
-       return budgetRepository.findTopByOrderByCreatedAtDesc()
-               .map(Budget::getAmount)
-               .orElse(0.0); //예산이 없을경우 기본값 0 으로 설정
+    public ResponseEntity<List<Budget>> getBudgets(Authentication authentication) {
+        String username = authentication.getName(); // 현재 인증된 사용자의 이름
+        List<Budget> budgets = budgetService.getBudgetsByUser(username);
+        return ResponseEntity.ok(budgets);
     }
 }
