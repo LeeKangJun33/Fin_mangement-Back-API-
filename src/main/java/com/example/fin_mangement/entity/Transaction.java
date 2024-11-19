@@ -18,8 +18,8 @@ public class Transaction {
     private Long id;
 
     // 사용자 ID를 독립적으로 저장
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "username", nullable = false)
+    private String username;
 
     // User 객체와의 관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,8 +32,8 @@ public class Transaction {
     private String category;
 
     // 필요 시 추가적인 생성자
-    public Transaction(Long userId, String description, double amount, LocalDateTime date, String category) {
-        this.userId = userId;
+    public Transaction(String username, String description, double amount, LocalDateTime date, String category) {
+        this.username = username;
         this.description = description;
         this.amount = amount;
         this.date = date;

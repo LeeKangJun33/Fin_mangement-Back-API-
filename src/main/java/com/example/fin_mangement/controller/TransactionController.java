@@ -29,13 +29,17 @@ public class TransactionController {
     // 거래 추가
     @PostMapping
     public ResponseEntity<String> addTransaction(@RequestBody Map<String, Object> request, Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
+        // Principal에서 username 가져오기
+        String username = principal.getName();
+
+        // 요청 데이터 추출 및 검증
         String description = (String) request.get("description");
         double amount = Double.parseDouble(request.get("amount").toString());
         String category = (String) request.get("category");
         LocalDateTime date = LocalDateTime.parse((String) request.get("date"));
 
-        transactionService.addTransaction(userId, description, amount, date, category);
+        // 서비스 호출
+        transactionService.addTransaction(username, description, amount, date, category);
         return ResponseEntity.ok("거래가 성공적으로 추가되었습니다!");
     }
 
@@ -44,13 +48,8 @@ public class TransactionController {
     @PreAuthorize("isAuthenticated()")
     public List<Transaction> getUserTransactions(Principal principal) {
         // Principal로부터 userId를 가져옴
-        Long userId;
-        try {
-            userId = (Long) ((UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
-        } catch (ClassCastException | NullPointerException e) {
-            throw new RuntimeException("Invalid Principal configuration", e);
-        }
-        return transactionRepository.findByUserId(userId);
+        String username = principal.getName();
+        return transactionRepository.findByUsername(username);
     }
 
 

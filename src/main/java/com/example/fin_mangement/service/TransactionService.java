@@ -13,17 +13,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionService {
 
-
     private final TransactionRepository transactionRepository;
 
-    //거래추가
-    public Transaction addTransaction(Long userId, String description, double amount, LocalDateTime date, String category){
-        Transaction transaction = new Transaction(userId, description, amount, date, category);
+    // 거래 추가
+    public Transaction addTransaction(String username, String description, double amount, LocalDateTime date, String category) {
+        validateTransactionInput(username, description, amount, category);
+
+        Transaction transaction = new Transaction(username, description, amount, date, category);
         return transactionRepository.save(transaction);
     }
-    //사용자별 거래 조회
-    public List<Transaction> getTransactionsByUserId(Long userId){
-        return transactionRepository.findByUserId(userId);
+
+    // 사용자별 거래 조회
+    public List<Transaction> getTransactionUsername(String username) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        return transactionRepository.findByUsername(username);
     }
 
+    // 입력 데이터 검증
+    private void validateTransactionInput(String username, String description, double amount, String category) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (description == null || description.trim().isEmpty()) {
+            throw new IllegalArgumentException("Description cannot be null or empty");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        if (category == null || category.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category cannot be null or empty");
+        }
+    }
 }
