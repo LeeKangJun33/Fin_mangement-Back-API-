@@ -15,28 +15,28 @@ public class BudgetGoalService {
 
     private final BudgetGoalRepositoy budgetGoalRepositoy;
 
-    public BudgetGoal createGoal(BudgetGoal goal) {
-        return budgetGoalRepositoy.save(goal);
-    }
+  public BudgetGoal addBudgetGoal(BudgetGoal budgetGoal) {
+      return budgetGoalRepositoy.save(budgetGoal);
+  }
 
-    public List<BudgetGoal> getGoalByUserId(long userId) {
-        return budgetGoalRepositoy.findByUserId(userId);
-    }
+  public List<BudgetGoal> getGoalsByUsername(String username) {
+      return budgetGoalRepositoy.findByUsername(username);
+  }
 
-    public BudgetGoal updateGoal(Long goalId,BudgetGoal updateGoal){
-        BudgetGoal existingGoal = budgetGoalRepositoy.findById(goalId).orElseThrow();
-        existingGoal.setTargetAmount(updateGoal.getTargetAmount());
-        existingGoal.setCategory(updateGoal.getCategory());
-        existingGoal.setPeriod(updateGoal.getPeriod());
-        return budgetGoalRepositoy.save(existingGoal);
-    }
+  public BudgetGoal updateBudgetGoal(Long id,BudgetGoal updateGoal) {
+      BudgetGoal goal = budgetGoalRepositoy.findById(id)
+              .orElseThrow(() -> new RuntimeException("목표를 찾을수없습니다."));
+      goal.setTargetAmount(updateGoal.getTargetAmount());
+      goal.setStartDate(updateGoal.getStartDate());
+      goal.setEndDate(updateGoal.getEndDate());
+      goal.setDescription(updateGoal.getDescription());
+      return budgetGoalRepositoy.save(goal);
+  }
 
-    public BigDecimal calculateAchievementRate(BigDecimal totalSpent, BigDecimal targetAmount) {
-        if (targetAmount.compareTo(BigDecimal.ZERO) > 0) {
-            return totalSpent.divide(targetAmount, 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
-        } else {
-            return BigDecimal.ZERO;
-        }
-    }
+  public void deleteBudgetGoal(Long id) {
+      budgetGoalRepositoy.deleteById(id);
+  }
+
+
 
 }

@@ -17,14 +17,18 @@ public class TransactionService {
 
     // 거래 추가
     public Transaction addTransaction(String username, String description, double amount, LocalDateTime date, String category) {
-        validateTransactionInput(username, description, amount, category);
-
-        Transaction transaction = new Transaction(username, description, amount, date, category);
+        Transaction transaction = Transaction.builder()
+                .username(username)
+                .amount(amount)
+                .category(category)
+                .date(date)
+                .description(description)
+                .build();
         return transactionRepository.save(transaction);
     }
 
     // 사용자별 거래 조회
-    public List<Transaction> getTransactionUsername(String username) {
+    public List<Transaction> getTransactionsByUsername(String username) {
         if (username == null || username.isEmpty()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
         }

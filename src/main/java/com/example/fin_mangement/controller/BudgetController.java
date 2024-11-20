@@ -27,7 +27,7 @@ public class BudgetController {
     public ResponseEntity<String> addBudget(@RequestBody BudgetDto budgetDto, Authentication authentication) {
         String username = authentication.getName(); // 현재 인증된 사용자의 이름
         budgetService.addBudget(budgetDto, username);
-        return ResponseEntity.ok("Budget added successfully!");
+        return ResponseEntity.ok("예산이 성공적으로 추가되었습니다");
     }
 
     // 사용자의 모든 예산 조회

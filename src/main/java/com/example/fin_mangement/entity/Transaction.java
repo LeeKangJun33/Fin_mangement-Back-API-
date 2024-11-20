@@ -8,35 +8,29 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "transactions")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 사용자 ID를 독립적으로 저장
-    @Column(name = "username", nullable = false)
-    private String username;
-
-    // User 객체와의 관계 설정
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)  // userId와 중복 매핑 방지
-    private User user;
-
-    private String description;
+    @Column(nullable = false)
     private double amount;
-    private LocalDateTime date;
+
     private String category;
 
-    // 필요 시 추가적인 생성자
-    public Transaction(String username, String description, double amount, LocalDateTime date, String category) {
-        this.username = username;
-        this.description = description;
-        this.amount = amount;
-        this.date = date;
-        this.category = category;
-    }
+    private String description;
+
+    private LocalDateTime date;
+
+    @Column(name = "username", nullable = false)
+    private String username; // 외래 키 매핑 대상 필드
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "username", referencedColumnName = "username", insertable = false, updatable = false)
+    private User user; // User 엔티티와의 관계 설정
 }

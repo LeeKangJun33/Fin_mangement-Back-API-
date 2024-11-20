@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -16,13 +18,17 @@ public class BudgetGoal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private BigDecimal targetAmount;
+    @Column(nullable = false)
+    private String username;
 
-    private String category;
+    @Column(nullable = false)
+    private double targetAmount;
 
-    private String period;
+    @Column(nullable = false)
+    private LocalDate startDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(nullable = false)
+    private LocalDate endDate;
+
+    private String description;
 }
