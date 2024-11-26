@@ -19,9 +19,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -71,5 +73,11 @@ public class AuthController {
         }catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body(new AuthResponse("잘못된 증명입니다."));
         }
+    }
+
+    @GetMapping("/userinfo")
+    public ResponseEntity<UserDto> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        UserDto userDto = userService.findByUsername(userDetails.getUsername());
+        return ResponseEntity.ok(userDto);
     }
 }

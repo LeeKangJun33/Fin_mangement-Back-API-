@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 대시보드</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+            text-align: center;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>대시보드</h1>
+</header>
+<div class="container">
+    <h2>환영합니다!</h2>
+    <p id="welcome-message"></p>
+    <button id="logout-button">로그아웃</button>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 토큰 검증 및 사용자 정보 표시
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/';
+            return;
+        }
+
+        // 사용자 정보 불러오기
+        fetch('http://localhost:8080/auth/userinfo', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                const welcomeMessage = document.getElementById('welcome-message');
+                welcomeMessage.textContent = `${data.username}님, 환영합니다!`;
+            })
+            .catch(error => {
+                console.error('사용자 정보 불러오기 실패:', error);
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            });
+
+        // 로그아웃 버튼 이벤트
+        const logoutButton = document.getElementById('logout-button');
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            alert('로그아웃되었습니다.');
+            window.location.href = '/';
+        });
+    });
+</script>
+</body>
+</html>

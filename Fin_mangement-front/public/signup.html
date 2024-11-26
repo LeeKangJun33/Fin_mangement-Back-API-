@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로그인</title>
-    <link rel="stylesheet" href="style.css">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="css/signup.css">
 </head>
 <body>
 <div class="container">
-    <h2>로그인</h2>
-    <form id="login-form">
+    <h2>회원가입</h2>
+    <form id="signup-form">
         <div class="form-group">
             <label for="username">사용자명:</label>
             <input type="text" id="username" name="username" placeholder="사용자명을 입력하세요" required>
@@ -18,17 +18,14 @@
             <label for="password">비밀번호:</label>
             <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
         </div>
-        <button type="submit" id="login-button">로그인</button>
+        <div class="form-group">
+            <label for="email">이메일:</label>
+            <input type="email" id="email" name="email" placeholder="이메일을 입력하세요" required>
+        </div>
+        <button type="submit" id="signup-button">회원가입</button>
     </form>
-    <p>아직 계정이 없나요?</p>
-    <button id="signup-button">회원가입</button>
+    <p>이미 계정이 있나요? <a href="/login.html">로그인</a></p>
 </div>
-<script src="auth.js"></script>
-<script>
-    // 회원가입 버튼 클릭 시 회원가입 페이지로 이동
-    document.getElementById('signup-button').addEventListener('click', () => {
-        window.location.href = '/signup.html';
-    });
-</script>
+<script src="signup.js"></script>
 </body>
 </html>
