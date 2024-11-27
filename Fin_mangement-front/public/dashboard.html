@@ -1,85 +1,113 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>메인 대시보드</title>
+    <title>Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
+            padding: 20px;
         }
-        header {
-            background-color: #007bff;
-            color: white;
-            padding: 1rem;
-            text-align: center;
+
+        .dashboard-container {
+            max-width: 900px;
+            margin: 0 auto;
         }
-        .container {
-            padding: 2rem;
-            text-align: center;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            margin-top: 1rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
+
+        .section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 20px;
             border-radius: 5px;
-            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .section ul li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section ul li:last-child {
+            border-bottom: none;
         }
     </style>
 </head>
 <body>
-<header>
-    <h1>대시보드</h1>
-</header>
-<div class="container">
-    <h2>환영합니다!</h2>
-    <p id="welcome-message"></p>
-    <button id="logout-button">로그아웃</button>
+<div class="dashboard-container">
+    <h1>개인 재무 관리 시스템</h1>
+
+    <div class="section" id="budgetSection">
+        <h2>Budget</h2>
+        <ul id="budgetList">로딩 중...</ul>
+    </div>
+
+    <div class="section" id="budgetGoalSection">
+        <h2>Budget Goals</h2>
+        <ul id="budgetGoalList">로딩 중...</ul>
+    </div>
+
+    <div class="section" id="transactionSection">
+        <h2>Transactions</h2>
+        <ul id="transactionList">로딩 중...</ul>
+    </div>
 </div>
+
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // 토큰 검증 및 사용자 정보 표시
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('로그인이 필요합니다.');
-            window.location.href = '/';
-            return;
+    // API 데이터 가져오기 함수
+    async function fetchData(endpoint) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/${endpoint}`);
+            return response.ok ? await response.json() : [];
+        } catch (error) {
+            console.error(`Error fetching ${endpoint}:`, error);
+            return [];
         }
+    }
 
-        // 사용자 정보 불러오기
-        fetch('http://localhost:8080/auth/userinfo', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        })
-            .then(response => response.json())
-            .then(data => {
-                const welcomeMessage = document.getElementById('welcome-message');
-                welcomeMessage.textContent = `${data.username}님, 환영합니다!`;
-            })
-            .catch(error => {
-                console.error('사용자 정보 불러오기 실패:', error);
-                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-                localStorage.removeItem('token');
-                window.location.href = '/';
-            });
+    // Budget 데이터 렌더링
+    async function loadBudgets() {
+        const budgets = await fetchData("budgets");
+        const budgetList = document.getElementById("budgetList");
+        budgetList.innerHTML = budgets.map(budget =>
+            `<li>${budget.name} - ${budget.amount} 원</li>`
+        ).join('');
+    }
 
-        // 로그아웃 버튼 이벤트
-        const logoutButton = document.getElementById('logout-button');
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('token');
-            alert('로그아웃되었습니다.');
-            window.location.href = '/';
-        });
-    });
+    // Budget Goal 데이터 렌더링
+    async function loadBudgetGoals() {
+        const budgetGoals = await fetchData("budget-goals");
+        const budgetGoalList = document.getElementById("budgetGoalList");
+        budgetGoalList.innerHTML = budgetGoals.map(goal =>
+            `<li>${goal.title}: ${goal.currentAmount}/${goal.targetAmount} 원</li>`
+        ).join('');
+    }
+
+    // Transaction 데이터 렌더링
+    async function loadTransactions() {
+        const transactions = await fetchData("transactions");
+        const transactionList = document.getElementById("transactionList");
+        transactionList.innerHTML = transactions.map(transaction =>
+            `<li>${transaction.date}: ${transaction.description} - ${transaction.amount} 원</li>`
+        ).join('');
+    }
+
+    // 초기화
+    loadBudgets();
+    loadBudgetGoals();
+    loadTransactions();
 </script>
 </body>
 </html>

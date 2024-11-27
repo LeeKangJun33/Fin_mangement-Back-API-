@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // API로 로그인 요청
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            const response = await fetch('http://localhost:8080/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -20,21 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                const data = await response.json();
-                console.log('로그인 성공:', data);
-
-                // JWT 토큰 저장 (예: localStorage)
-                localStorage.setItem('token', data.token);
-
-                // 메인 페이지로 이동
-                window.location.href = '/dashboard.html';
+                const data = await response.json(); // 응답에서 JWT 토큰 받기
+                localStorage.setItem("token", data.token); // JWT 토큰 저장
+                window.location.href = "dashboard.html"; // 로그인 성공 시 메인 페이지로 이동
             } else {
-                const error = await response.json();
-                alert(`로그인 실패: ${error.message || '알 수 없는 오류'}`);
+                alert("로그인 실패: " + (await response.text()));
             }
         } catch (error) {
-            console.error('로그인 요청 실패:', error);
-            alert('로그인 요청 중 문제가 발생했습니다.');
+            console.error("로그인 요청 중 오류 발생:", error);
+            alert("로그인 중 오류가 발생했습니다.");
         }
     });
 });

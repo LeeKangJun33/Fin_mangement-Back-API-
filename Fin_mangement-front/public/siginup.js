@@ -19,7 +19,7 @@ document.getElementById('signup-form').addEventListener('submit', async (event) 
 
     if (response.ok) {
         alert('회원가입 성공!');
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
     } else {
         const errorData = await response.json();
         alert(`회원가입 실패: ${errorData.message}`);

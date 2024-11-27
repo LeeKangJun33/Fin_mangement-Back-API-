@@ -39,25 +39,32 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private final UserService userService;
 
     // 로그인 요청 처리 및 JWT 토큰 발급
     @PostMapping("/register")
-    public ResponseEntity<Map<String,String >>registerUser(@RequestBody UserDto userDto) {
-        try {
-            userService.registerUser(userDto.getUsername(), userDto.getPassword(), userDto.getEmail());
-
-            // 성공 응답
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "회원가입에 성공했습니다!");
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            // 실패 응답
-            Map<String, String> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+    public ResponseEntity<?> registerUser(@RequestBody @Validated UserDto userDTO) {
+        // 1. 중복 체크
+        if (userRepository.findByUsername(userDTO.getUsername()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "이미 존재하는 사용자 이름입니다."));
         }
+
+        // 2. 비밀번호 암호화 및 User 엔티티 생성
+        User newUser = User.builder()
+                .username(userDTO.getUsername())
+                .password(passwordEncoder.encode(userDTO.getPassword()))
+                .email(userDTO.getEmail())
+                .enabled(true)
+                .build();
+
+        // 3. 저장
+        userRepository.save(newUser);
+
+        // 4. 성공 메시지 반환
+        return ResponseEntity.ok(Map.of("message", "회원가입이 완료되었습니다."));
     }
 
     @PostMapping("/login")
