@@ -3,111 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>통합 대시보드</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
             margin: 0;
             padding: 20px;
         }
 
         .dashboard-container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
 
         .section {
-            background: white;
-            margin-bottom: 20px;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
 
         .section h2 {
-            margin-top: 0;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
             color: #333;
         }
 
-        .section ul {
-            list-style: none;
-            padding: 0;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
         }
 
-        .section ul li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
         }
 
-        .section ul li:last-child {
-            border-bottom: none;
+        table th {
+            background-color: #f7f7f7;
+            color: #555;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group input, .form-group button {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
 <div class="dashboard-container">
-    <h1>개인 재무 관리 시스템</h1>
-
-    <div class="section" id="budgetSection">
-        <h2>Budget</h2>
-        <ul id="budgetList">로딩 중...</ul>
+    <!-- Budget Section -->
+    <div class="section">
+        <h2>예산 관리</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>예산 이름</th>
+                <th>금액</th>
+            </tr>
+            </thead>
+            <tbody id="budgetTable"></tbody>
+        </table>
+        <div class="form-group">
+            <input type="text" id="budgetName" placeholder="예산 이름">
+            <input type="number" id="budgetAmount" placeholder="예산 금액">
+            <button id="addBudgetButton">예산 추가</button>
+        </div>
     </div>
 
-    <div class="section" id="budgetGoalSection">
-        <h2>Budget Goals</h2>
-        <ul id="budgetGoalList">로딩 중...</ul>
+    <!-- Budget Goals Section -->
+    <div class="section">
+        <h2>목표 예산 관리</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>목표 이름</th>
+                <th>시작일</th>
+                <th>종료일</th>
+                <th>목표 금액</th>
+            </tr>
+            </thead>
+            <tbody id="budgetGoalTable"></tbody>
+        </table>
     </div>
 
-    <div class="section" id="transactionSection">
-        <h2>Transactions</h2>
-        <ul id="transactionList">로딩 중...</ul>
+    <!-- Transactions Section -->
+    <div class="section">
+        <h2>거래 내역</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>거래 설명</th>
+                <th>거래 금액</th>
+                <th>카테고리</th>
+                <th>날짜</th>
+            </tr>
+            </thead>
+            <tbody id="transactionTable"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // API 데이터 가져오기 함수
-    async function fetchData(endpoint) {
+    const API_BASE = "http://localhost:8080/api";
+    const token = localStorage.getItem("token");
+
+    async function fetchBudgets() {
         try {
-            const response = await fetch(`http://localhost:8080/api/${endpoint}`);
-            return response.ok ? await response.json() : [];
+            const response = await fetch(`${API_BASE}/budget`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await response.json();
+            console.log(data); // 응답 데이터 확인
+            const table = document.getElementById("budgetTable");
+            table.innerHTML = data.map(budget => `
+                    <tr>
+                        <td>${budget.name}</td>
+                        <td>${budget.amount.toLocaleString()}원</td>
+                    </tr>
+                `).join('');
         } catch (error) {
-            console.error(`Error fetching ${endpoint}:`, error);
-            return [];
+            console.error("예산 데이터 로드 실패:", error);
         }
     }
 
-    // Budget 데이터 렌더링
-    async function loadBudgets() {
-        const budgets = await fetchData("budgets");
-        const budgetList = document.getElementById("budgetList");
-        budgetList.innerHTML = budgets.map(budget =>
-            `<li>${budget.name} - ${budget.amount} 원</li>`
-        ).join('');
+    async function fetchBudgetGoals() {
+        const response = await fetch(`${API_BASE}/budget-goals`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        console.log(data); // 응답 데이터 확인
+        const table = document.getElementById("budgetGoalTable");
+        if (data.length > 0) {
+            table.innerHTML = data.map(goal => `
+            <tr>
+                <td>${goal.name}</td>
+                <td>${goal.startDate}</td>
+                <td>${goal.endDate}</td>
+                <td>${goal.amount.toLocaleString()}원</td>
+            </tr>
+        `).join('');
+        } else {
+            table.innerHTML = `<tr><td colspan="4">목표 예산 데이터가 없습니다.</td></tr>`;
+        }
     }
 
-    // Budget Goal 데이터 렌더링
-    async function loadBudgetGoals() {
-        const budgetGoals = await fetchData("budget-goals");
-        const budgetGoalList = document.getElementById("budgetGoalList");
-        budgetGoalList.innerHTML = budgetGoals.map(goal =>
-            `<li>${goal.title}: ${goal.currentAmount}/${goal.targetAmount} 원</li>`
-        ).join('');
+
+    async function fetchTransactions() {
+        const response = await fetch(`${API_BASE}/transactions`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        console.log(data); // 응답 데이터 확인
+        const table = document.getElementById("transactionTable");
+        if (data.length > 0) {
+            table.innerHTML = data.map(tx => `
+            <tr>
+                <td>${tx.description}</td>
+                <td>${tx.amount.toLocaleString()}원</td>
+                <td>${tx.category}</td>
+                <td>${tx.date}</td>
+            </tr>
+        `).join('');
+        } else {
+            table.innerHTML = `<tr><td colspan="4">거래 내역이 없습니다.</td></tr>`;
+        }
     }
 
-    // Transaction 데이터 렌더링
-    async function loadTransactions() {
-        const transactions = await fetchData("transactions");
-        const transactionList = document.getElementById("transactionList");
-        transactionList.innerHTML = transactions.map(transaction =>
-            `<li>${transaction.date}: ${transaction.description} - ${transaction.amount} 원</li>`
-        ).join('');
-    }
 
-    // 초기화
-    loadBudgets();
-    loadBudgetGoals();
-    loadTransactions();
+    document.getElementById("addBudgetButton").addEventListener("click", async () => {
+        const name = document.getElementById("budgetName").value;
+        const amount = document.getElementById("budgetAmount").value;
+
+        if (!name || !amount) {
+            alert("예산 이름과 금액을 입력하세요.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/budget`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, amount })
+            });
+
+            if (response.ok) {
+                alert("예산 추가 성공!");
+                fetchBudgets();
+            } else {
+                alert("예산 추가 실패!");
+            }
+        } catch (error) {
+            console.error("예산 추가 실패:", error);
+        }
+    });
+
+    fetchBudgets();
+    fetchBudgetGoals();
+    fetchTransactions();
 </script>
 </body>
 </html>
