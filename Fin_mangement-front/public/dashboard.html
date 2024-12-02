@@ -106,6 +106,14 @@
             </thead>
             <tbody id="budgetGoalTable"></tbody>
         </table>
+        <div class="form-group">
+            <input type="text" id="goalName" placeholder="목표 이름">
+            <input type="date" id="goalStartDate" placeholder="시작일">
+            <input type="date" id="goalEndDate" placeholder="종료일">
+            <input type="number" id="goalAmount" placeholder="목표 금액">
+            <button id="addGoalButton">목표 추가</button>
+        </div>
+
     </div>
 
     <!-- Transactions Section -->
@@ -221,6 +229,39 @@
             console.error("예산 추가 실패:", error);
         }
     });
+
+    document.getElementById("addGoalButton").addEventListener("click", async () => {
+        const name = document.getElementById("goalName").value;
+        const startDate = document.getElementById("goalStartDate").value;
+        const endDate = document.getElementById("goalEndDate").value;
+        const amount = document.getElementById("goalAmount").value;
+
+        if (!name || !startDate || !endDate || !amount) {
+            alert("모든 필드를 입력하세요.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/budget-goals`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, startDate, endDate, amount })
+            });
+
+            if (response.ok) {
+                alert("목표 예산 추가 성공!");
+                fetchBudgetGoals(); // 새 목표 데이터를 가져와서 업데이트
+            } else {
+                alert("목표 예산 추가 실패!");
+            }
+        } catch (error) {
+            console.error("목표 예산 추가 실패:", error);
+        }
+    });
+
 
     fetchBudgets();
     fetchBudgetGoals();
