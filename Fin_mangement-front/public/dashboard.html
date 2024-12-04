@@ -157,25 +157,34 @@
     }
 
     async function fetchBudgetGoals() {
-        const response = await fetch(`${API_BASE}/budget-goals`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-        console.log(data); // 응답 데이터 확인
-        const table = document.getElementById("budgetGoalTable");
-        if (data.length > 0) {
-            table.innerHTML = data.map(goal => `
-            <tr>
-                <td>${goal.name}</td>
-                <td>${goal.startDate}</td>
-                <td>${goal.endDate}</td>
-                <td>${goal.amount.toLocaleString()}원</td>
-            </tr>
-        `).join('');
-        } else {
-            table.innerHTML = `<tr><td colspan="4">목표 예산 데이터가 없습니다.</td></tr>`;
+        try {
+            const response = await fetch(`${API_BASE}/budget-goals`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await response.json();
+            console.log("목표 예산 데이터:", data); // 가져온 데이터 확인
+
+            const table = document.getElementById("budgetGoalTable");
+            if (data.length > 0) {
+                table.innerHTML = data
+                    .map(goal => `
+                    <tr>
+                        <td>${goal.name}</td>
+                        <td>${goal.startDate}</td>
+                        <td>${goal.endDate}</td>
+                        <td>${goal.amount.toLocaleString()}원</td>
+                    </tr>
+                `)
+                    .join('');
+            } else {
+                table.innerHTML = `<tr><td colspan="4">목표 예산 데이터가 없습니다.</td></tr>`;
+            }
+        } catch (error) {
+            console.error("목표 예산 데이터 로드 실패:", error);
         }
     }
+
 
 
     async function fetchTransactions() {
@@ -230,7 +239,7 @@
         }
     });
 
-    document.getElementById("addGoalButton").addEventListener("click", async () => {
+    document.getElementById("addBudgetGoalButton").addEventListener("click", async () => {
         const name = document.getElementById("goalName").value;
         const startDate = document.getElementById("goalStartDate").value;
         const endDate = document.getElementById("goalEndDate").value;
@@ -246,14 +255,14 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({ name, startDate, endDate, amount })
+                body: JSON.stringify({ name, startDate, endDate, amount }),
             });
 
             if (response.ok) {
                 alert("목표 예산 추가 성공!");
-                fetchBudgetGoals(); // 새 목표 데이터를 가져와서 업데이트
+                fetchBudgetGoals(); // 목표 예산 리스트 갱신 호출
             } else {
                 alert("목표 예산 추가 실패!");
             }
@@ -261,6 +270,7 @@
             console.error("목표 예산 추가 실패:", error);
         }
     });
+
 
 
     fetchBudgets();
