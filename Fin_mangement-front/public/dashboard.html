@@ -111,7 +111,7 @@
             <input type="date" id="goalStartDate" placeholder="시작일">
             <input type="date" id="goalEndDate" placeholder="종료일">
             <input type="number" id="goalAmount" placeholder="목표 금액">
-            <button id="addGoalButton">목표 추가</button>
+            <button id="addBudgetGoalButton">목표 추가</button>
         </div>
 
     </div>
@@ -130,6 +130,13 @@
             </thead>
             <tbody id="transactionTable"></tbody>
         </table>
+        <div class = "form-group">
+            <input type="text" id="transactionDescription" placeholder="거래 설명">
+            <input type="number" id="transactionAmount" placeholder="거래 금액">
+            <input type="text" id="transactionCategory" placeholder="카테고리">
+            <input type="date" id="transactionDate" placeholder="날짜">
+            <button id="addTransactionButton">거래추가</button>
+        </div>
     </div>
 </div>
 
@@ -207,8 +214,7 @@
             table.innerHTML = `<tr><td colspan="4">거래 내역이 없습니다.</td></tr>`;
         }
     }
-
-
+    /* 자바 스크립트 부분 */
     document.getElementById("addBudgetButton").addEventListener("click", async () => {
         const name = document.getElementById("budgetName").value;
         const amount = document.getElementById("budgetAmount").value;
@@ -255,14 +261,30 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ name, startDate, endDate, amount }),
             });
 
             if (response.ok) {
                 alert("목표 예산 추가 성공!");
-                fetchBudgetGoals(); // 목표 예산 리스트 갱신 호출
+
+                // 새로고침 없이 DOM에 새 목표 추가
+                const table = document.getElementById("budgetGoalTable");
+                const newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                <td>${name}</td>
+                <td>${startDate}</td>
+                <td>${endDate}</td>
+                <td>${parseInt(amount).toLocaleString()}원</td>
+            `;
+                table.appendChild(newRow);
+
+                // 입력 필드 초기화
+                document.getElementById("goalName").value = "";
+                document.getElementById("goalStartDate").value = "";
+                document.getElementById("goalEndDate").value = "";
+                document.getElementById("goalAmount").value = "";
             } else {
                 alert("목표 예산 추가 실패!");
             }
@@ -271,7 +293,50 @@
         }
     });
 
+    document.getElementById("addTransactionButton").addEventListener("click",async ()=>{
+        const description = document.getElementById("transactionDescription").value;
+        const amount = document.getElementById("transactionAmount").value;
+        const category = document.getElementById("transactionCategory").value;
+        const date = document.getElementById("transactionDate").value;
 
+        if (!description || !amount || !category ||!date){
+            alert("모든필드를 입력하세요.");
+            return;
+        }
+        try {
+            const response = await fetch(`${API_BASE}/transactions`,{
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json",
+                    Authorization : `Bearer ${token}`,
+                },
+                body : JSON.stringify({description,amount,category,date}),
+            });
+            if (response.ok){
+                alert("거래 추가 성공!");
+
+                const table = document.getElementById("transactionTable");
+                const newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                <td>${description}</td>
+                <td>${parseInt(amount).toLocaleString()}원</td>
+                <td>${category}</td>
+                <td>${date}</td>
+            `;
+
+                table.appendChild(newRow);
+
+                document.getElementById("transactionDescription").value ="";
+                document.getElementById("transactionAmount").value = "";
+                document.getElementById("transactionCategory").value ="";
+                document.getElementById("transactionDate").value = "";
+            }else{
+                alert("거래추가 실패!");
+            }
+        }catch (error){
+            console.log("거래추가 실패 :",error);
+        }
+    });
 
     fetchBudgets();
     fetchBudgetGoals();
