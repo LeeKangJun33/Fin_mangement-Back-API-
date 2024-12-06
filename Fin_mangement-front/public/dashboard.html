@@ -144,6 +144,7 @@
     const API_BASE = "http://localhost:8080/api";
     const token = localStorage.getItem("token");
 
+    /* 예산관리 JS부분 */
     async function fetchBudgets() {
         try {
             const response = await fetch(`${API_BASE}/budget`, {
@@ -162,7 +163,7 @@
             console.error("예산 데이터 로드 실패:", error);
         }
     }
-
+ /* 목표 예산관리 js */
     async function fetchBudgetGoals() {
         try {
             const response = await fetch(`${API_BASE}/budget-goals`, {
@@ -255,6 +256,9 @@
             alert("모든 필드를 입력하세요.");
             return;
         }
+
+        const payload = {name,startDate,endDate,amount};
+        console.log("전송데이터:",payload);
 
         try {
             const response = await fetch(`${API_BASE}/budget-goals`, {
