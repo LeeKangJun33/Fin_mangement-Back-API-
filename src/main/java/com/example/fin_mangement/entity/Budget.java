@@ -18,5 +18,8 @@ public class Budget {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "budgetName")
+    private String budgetName;
+
     private String userId;
 }

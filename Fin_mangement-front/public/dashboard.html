@@ -148,22 +148,41 @@
     async function fetchBudgets() {
         try {
             const response = await fetch(`${API_BASE}/budget`, {
-                headers: { "Authorization": `Bearer ${token}` }
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
             });
-            const data = await response.json();
-            console.log(data); // 응답 데이터 확인
-            const table = document.getElementById("budgetTable");
-            table.innerHTML = data.map(budget => `
-                    <tr>
-                        <td>${budget.name}</td>
-                        <td>${budget.amount.toLocaleString()}원</td>
-                    </tr>
-                `).join('');
+
+            if (response.ok) {
+                const budgets = await response.json();
+                console.log("서버에서 받은 예산 데이터:", budgets); // 디버깅
+                renderBudgetList(budgets); // 데이터 렌더링
+            } else {
+                console.error("예산 리스트를 가져오지 못했습니다.");
+            }
         } catch (error) {
-            console.error("예산 데이터 로드 실패:", error);
+            console.error("예산 가져오기 실패:", error);
         }
     }
- /* 목표 예산관리 js */
+
+    function renderBudgetList(budgets) {
+        const table = document.getElementById("budgetTable");
+        if (budgets.length > 0) {
+            table.innerHTML = budgets
+                .map(budget => `
+            <tr>
+                <td>${budget.budgetName}</td>
+                <td>${budget.amount.toLocaleString()}원</td>
+            </tr>
+        `)
+                .join('');
+        } else {
+            table.innerHTML = `<tr><td colspan="2">예산 데이터가 없습니다.</td></tr>`;
+        }
+    }
+
+    /* 목표 예산관리 js */
     async function fetchBudgetGoals() {
         try {
             const response = await fetch(`${API_BASE}/budget-goals`, {
@@ -217,13 +236,16 @@
     }
     /* 자바 스크립트 부분 */
     document.getElementById("addBudgetButton").addEventListener("click", async () => {
-        const name = document.getElementById("budgetName").value;
-        const amount = document.getElementById("budgetAmount").value;
+        const name = document.getElementById("budgetName").value.trim();
+        const amount = document.getElementById("budgetAmount").value.trim();
 
-        if (!name || !amount) {
+        if (!name || !amount || isNaN(amount)) {
             alert("예산 이름과 금액을 입력하세요.");
             return;
         }
+
+        // 전송 전 데이터 확인
+        console.log("전송 데이터:", { name, amount });
 
         try {
             const response = await fetch(`${API_BASE}/budget`, {
@@ -232,19 +254,23 @@
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, amount })
+                body: JSON.stringify({ name, amount: parseFloat(amount) })
             });
 
             if (response.ok) {
                 alert("예산 추가 성공!");
                 fetchBudgets();
             } else {
-                alert("예산 추가 실패!");
+                const errorData = await response.json();
+                console.error("서버 응답 오류:", errorData);
+                alert("예산 추가 실패: " + (errorData.message || "알 수 없는 오류"));
             }
         } catch (error) {
             console.error("예산 추가 실패:", error);
+            alert("예산 추가 중 오류가 발생했습니다.");
         }
     });
+
 
     document.getElementById("addBudgetGoalButton").addEventListener("click", async () => {
         const name = document.getElementById("goalName").value;
