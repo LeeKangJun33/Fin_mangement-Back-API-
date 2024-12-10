@@ -25,7 +25,14 @@ public class BudgetController {
     // 예산 추가
     @PostMapping
     public ResponseEntity<String> addBudget(@RequestBody BudgetDto budgetDto, Authentication authentication) {
+
+        // 전달받은 BudgetDto 값 확인
+        System.out.println("전달받은 BudgetDto: " + budgetDto);
+        System.out.println("예산 이름: " + budgetDto.getBudgetName());  // 예산 이름 출력
+        System.out.println("금액: " + budgetDto.getAmount());          // 금액 출력
+
         String username = authentication.getName(); // 현재 인증된 사용자의 이름
+        System.out.println("전달받은 BudgetDTO:"+budgetDto);
         budgetService.addBudget(budgetDto, username);
         return ResponseEntity.ok("예산이 성공적으로 추가되었습니다");
     }

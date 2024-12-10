@@ -16,10 +16,12 @@ public class Budget {
 
     private double amount;
 
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "budgetName")
+   @Column(name = "budget_name",nullable = false)
     private String budgetName;
 
+    @Column(nullable = false, updatable = false)
     private String userId;
 }

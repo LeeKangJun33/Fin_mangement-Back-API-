@@ -244,25 +244,25 @@
             return;
         }
 
-        // 전송 전 데이터 확인
-        console.log("전송 데이터:", { name, amount });
-
         try {
+            const payload = { name, amount: parseFloat(amount) };
+            console.log("Sending Budget Payload:", payload); // 로그 추가
+
             const response = await fetch(`${API_BASE}/budget`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({ name, amount: parseFloat(amount) })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
                 alert("예산 추가 성공!");
-                fetchBudgets();
+                fetchBudgets(); // 목록 갱신
             } else {
                 const errorData = await response.json();
-                console.error("서버 응답 오류:", errorData);
+                console.error("Server Response Error:", errorData);
                 alert("예산 추가 실패: " + (errorData.message || "알 수 없는 오류"));
             }
         } catch (error) {
@@ -270,7 +270,6 @@
             alert("예산 추가 중 오류가 발생했습니다.");
         }
     });
-
 
     document.getElementById("addBudgetGoalButton").addEventListener("click", async () => {
         const name = document.getElementById("goalName").value;
