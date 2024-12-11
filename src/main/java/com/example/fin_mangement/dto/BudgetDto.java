@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class BudgetDto {
 
-    @JsonProperty("budgetName")
+   @JsonProperty("name")
     private String budgetName;
     @JsonProperty("amount")
     private double amount;
