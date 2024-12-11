@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -73,7 +73,7 @@
 </head>
 <body>
 <div class="dashboard-container">
-    <!-- Budget Section -->
+    <!-- 예산 관리 -->
     <div class="section">
         <h2>예산 관리</h2>
         <table>
@@ -92,7 +92,7 @@
         </div>
     </div>
 
-    <!-- Budget Goals Section -->
+    <!-- 목표 예산 관리 -->
     <div class="section">
         <h2>목표 예산 관리</h2>
         <table>
@@ -116,7 +116,7 @@
 
     </div>
 
-    <!-- Transactions Section -->
+    <!-- 거래 내역 -->
     <div class="section">
         <h2>거래 내역</h2>
         <table>
@@ -130,12 +130,12 @@
             </thead>
             <tbody id="transactionTable"></tbody>
         </table>
-        <div class = "form-group">
+        <div class="form-group">
             <input type="text" id="transactionDescription" placeholder="거래 설명">
             <input type="number" id="transactionAmount" placeholder="거래 금액">
             <input type="text" id="transactionCategory" placeholder="카테고리">
             <input type="date" id="transactionDate" placeholder="날짜">
-            <button id="addTransactionButton">거래추가</button>
+            <button id="addTransactionButton">거래 추가</button>
         </div>
     </div>
 </div>
@@ -144,7 +144,7 @@
     const API_BASE = "http://localhost:8080/api";
     const token = localStorage.getItem("token");
 
-    /* 예산관리 JS부분 */
+    /* 예산 관리 JS */
     async function fetchBudgets() {
         try {
             const response = await fetch(`${API_BASE}/budget`, {
@@ -156,8 +156,8 @@
 
             if (response.ok) {
                 const budgets = await response.json();
-                console.log("서버에서 받은 예산 데이터:", budgets); // 디버깅
-                renderBudgetList(budgets); // 데이터 렌더링
+                console.log("서버에서 받은 예산 데이터:", budgets);
+                renderBudgetList(budgets);
             } else {
                 console.error("예산 리스트를 가져오지 못했습니다.");
             }
@@ -182,7 +182,7 @@
         }
     }
 
-    /* 목표 예산관리 js */
+    /* 목표 예산 관리 JS */
     async function fetchBudgetGoals() {
         try {
             const response = await fetch(`${API_BASE}/budget-goals`, {
@@ -190,7 +190,7 @@
             });
 
             const data = await response.json();
-            console.log("목표 예산 데이터:", data); // 가져온 데이터 확인
+            console.log("목표 예산 데이터:", data);
 
             const table = document.getElementById("budgetGoalTable");
             if (data.length > 0) {
@@ -212,14 +212,12 @@
         }
     }
 
-
-
     async function fetchTransactions() {
         const response = await fetch(`${API_BASE}/transactions`, {
             headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
-        console.log(data); // 응답 데이터 확인
+        console.log(data);
         const table = document.getElementById("transactionTable");
         if (data.length > 0) {
             table.innerHTML = data.map(tx => `
@@ -234,7 +232,8 @@
             table.innerHTML = `<tr><td colspan="4">거래 내역이 없습니다.</td></tr>`;
         }
     }
-    /* 자바 스크립트 부분 */
+
+    /* 버튼 클릭 이벤트 */
     document.getElementById("addBudgetButton").addEventListener("click", async () => {
         const name = document.getElementById("budgetName").value.trim();
         const amount = document.getElementById("budgetAmount").value.trim();
@@ -246,7 +245,7 @@
 
         try {
             const payload = { name, amount: parseFloat(amount) };
-            console.log("Sending Budget Payload:", payload); // 로그 추가
+            console.log("보내는 예산 데이터:", payload);
 
             const response = await fetch(`${API_BASE}/budget`, {
                 method: "POST",
@@ -259,10 +258,10 @@
 
             if (response.ok) {
                 alert("예산 추가 성공!");
-                fetchBudgets(); // 목록 갱신
+                fetchBudgets();
             } else {
                 const errorData = await response.json();
-                console.error("Server Response Error:", errorData);
+                console.error("서버 응답 오류:", errorData);
                 alert("예산 추가 실패: " + (errorData.message || "알 수 없는 오류"));
             }
         } catch (error) {
@@ -282,8 +281,8 @@
             return;
         }
 
-        const payload = {name,startDate,endDate,amount};
-        console.log("전송데이터:",payload);
+        const payload = { name, startDate, endDate, amount };
+        console.log("보내는 목표 데이터:", payload);
 
         try {
             const response = await fetch(`${API_BASE}/budget-goals`, {
@@ -292,13 +291,12 @@
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ name, startDate, endDate, amount }),
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
                 alert("목표 예산 추가 성공!");
 
-                // 새로고침 없이 DOM에 새 목표 추가
                 const table = document.getElementById("budgetGoalTable");
                 const newRow = document.createElement("tr");
                 newRow.innerHTML = `
@@ -309,7 +307,6 @@
             `;
                 table.appendChild(newRow);
 
-                // 입력 필드 초기화
                 document.getElementById("goalName").value = "";
                 document.getElementById("goalStartDate").value = "";
                 document.getElementById("goalEndDate").value = "";
@@ -322,26 +319,26 @@
         }
     });
 
-    document.getElementById("addTransactionButton").addEventListener("click",async ()=>{
+    document.getElementById("addTransactionButton").addEventListener("click", async () => {
         const description = document.getElementById("transactionDescription").value;
         const amount = document.getElementById("transactionAmount").value;
         const category = document.getElementById("transactionCategory").value;
         const date = document.getElementById("transactionDate").value;
 
-        if (!description || !amount || !category ||!date){
-            alert("모든필드를 입력하세요.");
+        if (!description || !amount || !category || !date) {
+            alert("모든 필드를 입력하세요.");
             return;
         }
         try {
-            const response = await fetch(`${API_BASE}/transactions`,{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json",
-                    Authorization : `Bearer ${token}`,
+            const response = await fetch(`${API_BASE}/transactions`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
-                body : JSON.stringify({description,amount,category,date}),
+                body: JSON.stringify({ description, amount, category, date }),
             });
-            if (response.ok){
+            if (response.ok) {
                 alert("거래 추가 성공!");
 
                 const table = document.getElementById("transactionTable");
@@ -355,15 +352,15 @@
 
                 table.appendChild(newRow);
 
-                document.getElementById("transactionDescription").value ="";
+                document.getElementById("transactionDescription").value = "";
                 document.getElementById("transactionAmount").value = "";
-                document.getElementById("transactionCategory").value ="";
+                document.getElementById("transactionCategory").value = "";
                 document.getElementById("transactionDate").value = "";
-            }else{
-                alert("거래추가 실패!");
+            } else {
+                alert("거래 추가 실패!");
             }
-        }catch (error){
-            console.log("거래추가 실패 :",error);
+        } catch (error) {
+            console.log("거래 추가 실패:", error);
         }
     });
 
