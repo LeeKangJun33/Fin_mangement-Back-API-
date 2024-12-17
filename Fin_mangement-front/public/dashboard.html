@@ -10,6 +10,7 @@
             background-color: #f0f4f8;
             margin: 0;
             padding: 20px;
+            color: #333;
         }
 
         .dashboard-container {
@@ -21,11 +22,7 @@
             padding: 20px;
         }
 
-        .section {
-            margin-bottom: 30px;
-        }
-
-        .section h2 {
+        h2 {
             font-size: 1.8rem;
             margin-bottom: 15px;
             color: #333;
@@ -37,46 +34,50 @@
             margin-bottom: 20px;
         }
 
-        table th, table td {
+        th, td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: left;
         }
 
-        table th {
+        th {
             background-color: #f7f7f7;
             color: #555;
         }
 
-        .form-group {
-            margin-bottom: 10px;
-        }
-
-        .form-group input, .form-group button {
+        input, button {
             padding: 10px;
-            margin-right: 10px;
+            margin-right: 5px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
 
-        .form-group button {
+        button {
             background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
         }
 
-        .form-group button:hover {
+        button:hover {
             background-color: #0056b3;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        .form-container input {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 <div class="dashboard-container">
     <!-- 예산 관리 -->
-    <div class="section">
+    <section>
         <h2>예산 관리</h2>
-        <table>
+        <table id="budgetTable">
             <thead>
             <tr>
                 <th>예산 이름</th>
@@ -85,43 +86,45 @@
                 <th>액션</th>
             </tr>
             </thead>
-            <tbody id="budgetTable"></tbody>
+            <tbody></tbody>
         </table>
-        <div class="form-group">
+        <div class="form-container">
             <input type="text" id="budgetName" placeholder="예산 이름">
             <input type="number" id="budgetAmount" placeholder="예산 금액">
             <button id="addBudgetButton">예산 추가</button>
         </div>
-    </div>
+    </section>
 
     <!-- 목표 예산 관리 -->
-    <div class="section">
+    <section>
         <h2>목표 예산 관리</h2>
-        <table>
+        <table id="budgetGoalTable">
             <thead>
             <tr>
-                <th>목표 이름</th>
+                <th>ID</th>
+                <th>설명</th>
                 <th>시작일</th>
                 <th>종료일</th>
                 <th>목표 금액</th>
+                <th>사용자 이름</th>
             </tr>
             </thead>
-            <tbody id="budgetGoalTable"></tbody>
+            <tbody></tbody>
         </table>
-        <div class="form-group">
-            <input type="text" id="goalName" placeholder="목표 이름">
+        <div class="form-container">
+            <input type="text" id="goalDescription" placeholder="설명">
             <input type="date" id="goalStartDate" placeholder="시작일">
             <input type="date" id="goalEndDate" placeholder="종료일">
-            <input type="number" id="goalAmount" placeholder="목표 금액">
-            <button id="addBudgetGoalButton">목표 추가</button>
+            <input type="number" id="goalTargetAmount" placeholder="목표 금액">
+            <input type="text" id="goalUsername" placeholder="사용자 이름">
+            <button id="addGoalButton">목표 추가</button>
         </div>
-
-    </div>
+    </section>
 
     <!-- 거래 내역 -->
-    <div class="section">
+    <section>
         <h2>거래 내역</h2>
-        <table>
+        <table id="transactionTable">
             <thead>
             <tr>
                 <th>거래 설명</th>
@@ -130,282 +133,94 @@
                 <th>날짜</th>
             </tr>
             </thead>
-            <tbody id="transactionTable"></tbody>
+            <tbody></tbody>
         </table>
-        <div class="form-group">
+        <div class="form-container">
             <input type="text" id="transactionDescription" placeholder="거래 설명">
             <input type="number" id="transactionAmount" placeholder="거래 금액">
             <input type="text" id="transactionCategory" placeholder="카테고리">
             <input type="date" id="transactionDate" placeholder="날짜">
             <button id="addTransactionButton">거래 추가</button>
         </div>
-    </div>
+    </section>
 </div>
 
 <script>
     const API_BASE = "http://localhost:8080/api";
     const token = localStorage.getItem("token");
 
-    /* 예산 관리 JS */
-    async function fetchBudgets() {
+    // 데이터 가져오기 및 렌더링
+    async function fetchData(endpoint, tableId, renderFunction) {
         try {
-            const response = await fetch(`${API_BASE}/budget`, {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
+            const response = await fetch(`${API_BASE}/${endpoint}`, {
+                headers: { "Authorization": `Bearer ${token}` }
             });
-
-            if (response.ok) {
-                const budgets = await response.json();
-                console.log("서버에서 받은 예산 데이터:", budgets);
-                renderBudgetList(budgets);
-            } else {
-                console.error("예산 리스트를 가져오지 못했습니다.");
-            }
-        } catch (error) {
-            console.error("예산 가져오기 실패:", error);
-        }
-    }
-
-    function renderBudgetList(budgets) {
-        const table = document.getElementById("budgetTable");
-        if (budgets.length > 0) {
-            table.innerHTML = budgets
-                .map(budget => `
-                <tr>
-                    <td>${budget.budgetName}</td>
-                    <td>${budget.amount.toLocaleString()}원</td>
-                    <td>${new Date(budget.createdAt).toLocaleString()}</td>
-                    <td>
-                        <button class="delete-budget-btn" data-id="${budget.id}">삭제</button>
-                    </td>
-                </tr>
-            `)
-                .join('');
-            attachDeleteEventHandlers();
-        } else {
-            table.innerHTML = `<tr><td colspan="4">예산 데이터가 없습니다.</td></tr>`;
-        }
-    }
-    function attachDeleteEventHandlers() {
-        const deleteButtons = document.querySelectorAll(".delete-budget-btn");
-        deleteButtons.forEach(button => {
-            button.addEventListener("click", async (event) => {
-                const id = event.target.getAttribute("data-id");
-                if (confirm("이 예산을 삭제하시겠습니까?")) {
-                    await deleteBudget(id);
-                    fetchBudgets(); // 갱신
-                }
-            });
-        });
-    }
-
-    /* 목표 예산 관리 JS */
-    async function fetchBudgetGoals() {
-        try {
-            const response = await fetch(`${API_BASE}/budget-goals`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
             const data = await response.json();
-            console.log("목표 예산 데이터:", data);
-
-            const table = document.getElementById("budgetGoalTable");
-            if (data.length > 0) {
-                table.innerHTML = data
-                    .map(goal => `
-                    <tr>
-                        <td>${goal.name}</td>
-                        <td>${goal.startDate}</td>
-                        <td>${goal.endDate}</td>
-                        <td>${goal.amount.toLocaleString()}원</td>
-                    </tr>
-                `)
-                    .join('');
-            } else {
-                table.innerHTML = `<tr><td colspan="4">목표 예산 데이터가 없습니다.</td></tr>`;
-            }
+            renderFunction(data, tableId);
         } catch (error) {
-            console.error("목표 예산 데이터 로드 실패:", error);
+            console.error(`${endpoint} 데이터 불러오기 실패:`, error);
         }
     }
 
-    async function fetchTransactions() {
-        const response = await fetch(`${API_BASE}/transactions`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-        console.log(data);
-        const table = document.getElementById("transactionTable");
-        if (data.length > 0) {
-            table.innerHTML = data.map(tx => `
+    // 데이터 렌더링 함수
+    function renderTable(data, tableId, rowMapper) {
+        const tableBody = document.querySelector(`#${tableId} tbody`);
+        tableBody.innerHTML = data.length
+            ? data.map(rowMapper).join("")
+            : `<tr><td colspan="4">데이터가 없습니다.</td></tr>`;
+    }
+
+    // 예산 관리
+    function renderBudget(data, tableId) {
+        renderTable(data, tableId, budget => `
+            <tr>
+                <td>${budget.budgetName}</td>
+                <td>${budget.amount.toLocaleString()}원</td>
+                <td>${new Date(budget.createdAt).toLocaleString()}</td>
+                <td><button onclick="deleteBudget(${budget.id})">삭제</button></td>
+            </tr>
+        `);
+    }
+
+    // 목표 예산 관리
+    function renderGoal(data, tableId) {
+        renderTable(data, tableId, goal => `
+            <tr>
+                <td>${goal.id}</td>
+            <td>${goal.description}</td>
+            <td>${goal.start_date || '-'}</td>
+            <td>${goal.end_date || '-'}</td>
+            <td>${goal.target_amount ? goal.target_amount.toLocaleString() + '원' : '0원'}</td>
+            <td>${goal.username || '-'}</td>
+            </tr>
+        `);
+    }
+
+    // 거래 내역
+    function renderTransactions(data, tableId) {
+        renderTable(data, tableId, tx => `
             <tr>
                 <td>${tx.description}</td>
                 <td>${tx.amount.toLocaleString()}원</td>
                 <td>${tx.category}</td>
                 <td>${tx.date}</td>
             </tr>
-        `).join('');
-        } else {
-            table.innerHTML = `<tr><td colspan="4">거래 내역이 없습니다.</td></tr>`;
-        }
+        `);
     }
 
+    // 삭제 기능
     async function deleteBudget(id) {
-        try {
-            const response = await fetch(`${API_BASE}/budget/${id}`, {
-                method: "DELETE",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                alert("예산이 삭제되었습니다.");
-            } else {
-                alert("예산 삭제 실패!");
-            }
-        } catch (error) {
-            console.error("예산 삭제 실패:", error);
-            alert("예산 삭제 중 오류가 발생했습니다.");
-        }
+        await fetch(`${API_BASE}/budget/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        fetchData("budget", "budgetTable", renderBudget);
     }
 
-    /* 버튼 클릭 이벤트 */
-    document.getElementById("addBudgetButton").addEventListener("click", async () => {
-        const name = document.getElementById("budgetName").value.trim();
-        const amount = document.getElementById("budgetAmount").value.trim();
-
-        if (!name || !amount || isNaN(amount)) {
-            alert("예산 이름과 금액을 입력하세요.");
-            return;
-        }
-
-        try {
-            const payload = { name, amount: parseFloat(amount) };
-            console.log("보내는 예산 데이터:", payload);
-
-            const response = await fetch(`${API_BASE}/budget`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (response.ok) {
-                alert("예산 추가 성공!");
-                fetchBudgets();
-            } else {
-                const errorData = await response.json();
-                console.error("서버 응답 오류:", errorData);
-                alert("예산 추가 실패: " + (errorData.message || "알 수 없는 오류"));
-            }
-        } catch (error) {
-            console.error("예산 추가 실패:", error);
-            alert("예산 추가 중 오류가 발생했습니다.");
-        }
-    });
-
-    document.getElementById("addBudgetGoalButton").addEventListener("click", async () => {
-        const name = document.getElementById("goalName").value;
-        const startDate = document.getElementById("goalStartDate").value;
-        const endDate = document.getElementById("goalEndDate").value;
-        const amount = document.getElementById("goalAmount").value;
-
-        if (!name || !startDate || !endDate || !amount) {
-            alert("모든 필드를 입력하세요.");
-            return;
-        }
-
-        const payload = { name, startDate, endDate, amount };
-        console.log("보내는 목표 데이터:", payload);
-
-        try {
-            const response = await fetch(`${API_BASE}/budget-goals`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-                alert("목표 예산 추가 성공!");
-
-                const table = document.getElementById("budgetGoalTable");
-                const newRow = document.createElement("tr");
-                newRow.innerHTML = `
-                <td>${name}</td>
-                <td>${startDate}</td>
-                <td>${endDate}</td>
-                <td>${parseInt(amount).toLocaleString()}원</td>
-            `;
-                table.appendChild(newRow);
-
-                document.getElementById("goalName").value = "";
-                document.getElementById("goalStartDate").value = "";
-                document.getElementById("goalEndDate").value = "";
-                document.getElementById("goalAmount").value = "";
-            } else {
-                alert("목표 예산 추가 실패!");
-            }
-        } catch (error) {
-            console.error("목표 예산 추가 실패:", error);
-        }
-    });
-
-    document.getElementById("addTransactionButton").addEventListener("click", async () => {
-        const description = document.getElementById("transactionDescription").value;
-        const amount = document.getElementById("transactionAmount").value;
-        const category = document.getElementById("transactionCategory").value;
-        const date = document.getElementById("transactionDate").value;
-
-        if (!description || !amount || !category || !date) {
-            alert("모든 필드를 입력하세요.");
-            return;
-        }
-        try {
-            const response = await fetch(`${API_BASE}/transactions`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ description, amount, category, date }),
-            });
-            if (response.ok) {
-                alert("거래 추가 성공!");
-
-                const table = document.getElementById("transactionTable");
-                const newRow = document.createElement("tr");
-                newRow.innerHTML = `
-                <td>${description}</td>
-                <td>${parseInt(amount).toLocaleString()}원</td>
-                <td>${category}</td>
-                <td>${date}</td>
-            `;
-
-                table.appendChild(newRow);
-
-                document.getElementById("transactionDescription").value = "";
-                document.getElementById("transactionAmount").value = "";
-                document.getElementById("transactionCategory").value = "";
-                document.getElementById("transactionDate").value = "";
-            } else {
-                alert("거래 추가 실패!");
-            }
-        } catch (error) {
-            console.log("거래 추가 실패:", error);
-        }
-    });
-
-    fetchBudgets();
-    fetchBudgetGoals();
-    fetchTransactions();
+    // 페이지 초기화
+    fetchData("budget", "budgetTable", renderBudget);
+    fetchData("budget-goals", "budgetGoalTable", renderGoal);
+    fetchData("transactions", "transactionTable", renderTransactions);
 </script>
 </body>
 </html>
