@@ -173,18 +173,19 @@
         if (budgets.length > 0) {
             table.innerHTML = budgets
                 .map(budget => `
-            <tr>
-                <td>${budget.id}</td>
-                <td>${new Date(budget.createAt).toLocaleString()}</td>
-                <td>${budget.budgetName}</td>
-                <td>${budget.amount.toLocaleString()}원</td>
-                <td><button class = "delete-budget-btn" data-id="${budget.id}">삭제</button></td>
-            </tr>
-        `)
+                <tr>
+                    <td>${budget.budgetName}</td>
+                    <td>${budget.amount.toLocaleString()}원</td>
+                    <td>${new Date(budget.createdAt).toLocaleString()}</td>
+                    <td>
+                        <button class="delete-budget-btn" data-id="${budget.id}">삭제</button>
+                    </td>
+                </tr>
+            `)
                 .join('');
             attachDeleteEventHandlers();
         } else {
-            table.innerHTML = `<tr><td colspan="2">예산 데이터가 없습니다.</td></tr>`;
+            table.innerHTML = `<tr><td colspan="4">예산 데이터가 없습니다.</td></tr>`;
         }
     }
     function attachDeleteEventHandlers() {
