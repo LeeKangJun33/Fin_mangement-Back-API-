@@ -1,10 +1,10 @@
 package com.example.fin_mangement.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class BudgetGoalRequestDTO {
     private String name;       // 목표 이름
     private String startDate;  // 시작 날짜

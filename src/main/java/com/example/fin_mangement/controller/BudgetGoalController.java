@@ -28,40 +28,41 @@ public class BudgetGoalController {
     //목표설정
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> addBudgetGoal(@RequestBody BudgetGoalRequestDTO request, Principal principal){
-     String username = principal.getName();
+    public ResponseEntity<?> addBudgetGoal(@RequestBody BudgetGoalRequestDTO request, Principal principal) {
+        String username = principal.getName();
 
-     if(request.getName()==null || request.getStartDate() ==null || request.getEndDate()==null || request.getAmount() <=0){
-         return ResponseEntity.badRequest().body("모든 필드를 올바르게 입력하세요.");
-     }
+        // 입력값 검증
+        if (request.getName() == null || request.getStartDate() == null ||
+                request.getEndDate() == null || request.getAmount() <= 0) {
+            return ResponseEntity.badRequest().body("모든 필드를 올바르게 입력하세요.");
+        }
 
-     LocalDate startDate = LocalDate.parse(request.getStartDate());
-     LocalDate endDate = LocalDate.parse(request.getEndDate());
+        // 날짜 변환 및 유효성 검사
+        LocalDate startDate = LocalDate.parse(request.getStartDate());
+        LocalDate endDate = LocalDate.parse(request.getEndDate());
+        if (startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("시작 날짜는 종료 날짜 이전이어야 합니다.");
+        }
 
-     if(startDate.isAfter(endDate)){
-         return ResponseEntity.badRequest().body("시작 날짜는 종료 날짜 이전이어야 합니다.");
-     }
+        // 엔티티 변환 및 저장
+        BudgetGoal goal = BudgetGoal.builder()
+                .username(username)
+                .targetAmount(request.getAmount())
+                .startDate(startDate)
+                .endDate(endDate)
+                .description(request.getName())
+                .build();
 
-     BudgetGoal goal = new BudgetGoal();
-     goal.setDescription(request.getName());
-     goal.setTargetAmount(request.getAmount());
-     goal.setStartDate(startDate);
-     goal.setEndDate(endDate);
-     goal.setUsername(username);
+        budgetGoalService.save(goal);
 
-     budgetGoalService.save(goal);
-
-     return ResponseEntity.ok("목표예산 추가 성공!");
-
+        return ResponseEntity.ok("목표 예산이 성공적으로 추가되었습니다!");
     }
+
 
     //사용자별 목표 조회
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<BudgetGoal>> getBudgetGoals(Principal principal){
-        if(principal == null || principal.getName() ==null){
-            return  ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         String username = principal.getName();
         List<BudgetGoal> goals = budgetGoalService.getGoalsByUsername(username);
         return ResponseEntity.ok(goals);
@@ -71,12 +72,15 @@ public class BudgetGoalController {
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BudgetGoal> updateBudgetGoal(@PathVariable Long id, @RequestBody BudgetGoalRequestDTO request) {
-        // BudgetGoalRequestDTO를 BudgetGoal로 변환
-        BudgetGoal updatedGoal = new BudgetGoal();
-        updatedGoal.setDescription(request.getName());
-        updatedGoal.setTargetAmount(request.getAmount());
-        updatedGoal.setStartDate(LocalDate.parse(request.getStartDate()));
-        updatedGoal.setEndDate(LocalDate.parse(request.getEndDate()));
+        LocalDate startDate = LocalDate.parse(request.getStartDate());
+        LocalDate endDate = LocalDate.parse(request.getEndDate());
+
+        BudgetGoal updatedGoal = BudgetGoal.builder()
+                .description(request.getName())
+                .targetAmount(request.getAmount())
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
 
         BudgetGoal result = budgetGoalService.updateBudgetGoal(id, updatedGoal);
         return ResponseEntity.ok(result);

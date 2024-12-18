@@ -217,6 +217,33 @@
         fetchData("budget", "budgetTable", renderBudget);
     }
 
+    async function fetchGoals() {
+        try {
+            const response = await fetch("/api/budget-goals");
+            if (!response.ok) {
+                throw new Error("목표 데이터를 불러오는 데 실패했습니다.");
+            }
+
+            const data = await response.json();
+
+            renderTable(data, "budgetGoalTable", goal => `
+            <tr>
+                <td>${goal.id}</td>
+                <td>${goal.description}</td>
+                <td>${goal.startDate}</td>
+                <td>${goal.endDate}</td>
+                <td>${goal.targetAmount.toLocaleString()}원</td>
+                <td>
+                    <button onclick="deleteGoal(${goal.id})">삭제</button>
+                </td>
+            </tr>
+        `);
+        } catch (error) {
+            console.error("목표 불러오기 오류:", error);
+        }
+    }
+
+
 
     //예산추가 이벤트 리스너
     document.getElementById("addBudgetButton").addEventListener("click", async () => {
@@ -263,40 +290,43 @@
 
     //목표 예산추가 이벤트 리스너
     document.getElementById("addGoalButton").addEventListener("click", async () => {
-        const description = document.getElementById("goalDescription").value;
+        const name = document.getElementById("goalDescription").value.trim();
         const startDate = document.getElementById("goalStartDate").value;
         const endDate = document.getElementById("goalEndDate").value;
-        const targetAmount = document.getElementById("goalTargetAmount").value;
-        const username = document.getElementById("goalUsername").value;
+        const amount = document.getElementById("goalTargetAmount").value;
 
-        if (!description || !startDate || !endDate || !targetAmount || !username) {
-            alert("모든 항목을 입력해주세요.");
+        if (!name || !startDate || !endDate || !amount || isNaN(amount) || amount <= 0) {
+            alert("모든 필드를 올바르게 입력하세요.");
             return;
         }
 
         try {
-            await fetch(`${API_BASE}/budget-goals`, {
+            const response = await fetch("/api/budget-goals", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    description: description,
-                    start_date: startDate,
-                    end_date: endDate,
-                    target_amount: parseInt(targetAmount, 10),
-                    username: username
+                    name: name,
+                    startDate: startDate,
+                    endDate: endDate,
+                    amount: parseFloat(amount)
                 })
             });
 
-            alert("목표 예산이 추가되었습니다.");
-            fetchData("budget-goals", "budgetGoalTable", renderGoal); // 테이블 새로고침
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(errorMessage);
+            }
+
+            alert("목표 예산이 성공적으로 추가되었습니다!");
+            fetchGoals(); // 목표 목록 갱신
         } catch (error) {
-            console.error("목표 예산 추가 실패:", error);
-            alert("목표 예산 추가 중 오류가 발생했습니다.");
+            console.error("추가 중 오류 발생:", error);
+            alert(`추가 실패: ${error.message}`);
         }
     });
+
 
     //거래내역추가 이벤트 리스너
     document.getElementById("addTransactionButton").addEventListener("click", async () => {
