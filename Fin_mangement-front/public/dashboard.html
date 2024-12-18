@@ -217,6 +217,112 @@
         fetchData("budget", "budgetTable", renderBudget);
     }
 
+
+    //예산추가 이벤트 리스너
+    document.getElementById("addBudgetButton").addEventListener("click", async () => {
+        const budgetName = document.getElementById("budgetName").value;
+        const budgetAmount = document.getElementById("budgetAmount").value;
+
+        if (!budgetName || !budgetAmount) {
+            alert("예산 이름과 금액을 입력해주세요.");
+            return;
+        }
+
+        try {
+            await fetch(`${API_BASE}/budget`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    budgetName: budgetName,
+                    amount: parseInt(budgetAmount, 10)
+                })
+            });
+
+            alert("예산이 추가되었습니다.");
+            fetchData("budget", "budgetTable", renderBudget); // 테이블 새로고침
+        } catch (error) {
+            console.error("예산 추가 실패:", error);
+            alert("예산 추가 중 오류가 발생했습니다.");
+        }
+    });
+
+    //목표 예산추가 이벤트 리스너
+    document.getElementById("addGoalButton").addEventListener("click", async () => {
+        const description = document.getElementById("goalDescription").value;
+        const startDate = document.getElementById("goalStartDate").value;
+        const endDate = document.getElementById("goalEndDate").value;
+        const targetAmount = document.getElementById("goalTargetAmount").value;
+        const username = document.getElementById("goalUsername").value;
+
+        if (!description || !startDate || !endDate || !targetAmount || !username) {
+            alert("모든 항목을 입력해주세요.");
+            return;
+        }
+
+        try {
+            await fetch(`${API_BASE}/budget-goals`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    description: description,
+                    start_date: startDate,
+                    end_date: endDate,
+                    target_amount: parseInt(targetAmount, 10),
+                    username: username
+                })
+            });
+
+            alert("목표 예산이 추가되었습니다.");
+            fetchData("budget-goals", "budgetGoalTable", renderGoal); // 테이블 새로고침
+        } catch (error) {
+            console.error("목표 예산 추가 실패:", error);
+            alert("목표 예산 추가 중 오류가 발생했습니다.");
+        }
+    });
+
+    //거래내역추가 이벤트 리스너
+    document.getElementById("addTransactionButton").addEventListener("click", async () => {
+        const description = document.getElementById("transactionDescription").value;
+        const amount = document.getElementById("transactionAmount").value;
+        const category = document.getElementById("transactionCategory").value;
+        const date = document.getElementById("transactionDate").value;
+
+        if (!description || !amount || !category || !date) {
+            alert("모든 항목을 입력해주세요.");
+            return;
+        }
+
+        try {
+            await fetch(`${API_BASE}/transactions`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    description: description,
+                    amount: parseInt(amount, 10),
+                    category: category,
+                    date: date
+                })
+            });
+
+            alert("거래 내역이 추가되었습니다.");
+            fetchData("transactions", "transactionTable", renderTransactions); // 테이블 새로고침
+        } catch (error) {
+            console.error("거래 내역 추가 실패:", error);
+            alert("거래 내역 추가 중 오류가 발생했습니다.");
+        }
+    });
+
+
+
     // 페이지 초기화
     fetchData("budget", "budgetTable", renderBudget);
     fetchData("budget-goals", "budgetGoalTable", renderGoal);
