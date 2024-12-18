@@ -220,13 +220,21 @@
 
     //예산추가 이벤트 리스너
     document.getElementById("addBudgetButton").addEventListener("click", async () => {
-        const budgetName = document.getElementById("budgetName").value;
+        const budgetName = document.getElementById("budgetName").value.trim();
         const budgetAmount = document.getElementById("budgetAmount").value;
 
-        if (!budgetName || !budgetAmount) {
-            alert("예산 이름과 금액을 입력해주세요.");
+        if (!budgetName) {
+            alert("예산 이름을 입력해주세요.");
             return;
         }
+
+        if (!budgetAmount || isNaN(budgetAmount) || parseInt(budgetAmount) <= 0) {
+            alert("유효한 예산 금액을 입력해주세요.");
+            return;
+        }
+
+        console.log("예산 이름:", budgetName);
+        console.log("예산 금액:", budgetAmount);
 
         try {
             await fetch(`${API_BASE}/budget`, {
@@ -242,12 +250,16 @@
             });
 
             alert("예산이 추가되었습니다.");
+            document.getElementById("budgetName").value = ""; // 입력 필드 초기화
+            document.getElementById("budgetAmount").value = ""; // 입력 필드 초기화
+
             fetchData("budget", "budgetTable", renderBudget); // 테이블 새로고침
         } catch (error) {
             console.error("예산 추가 실패:", error);
             alert("예산 추가 중 오류가 발생했습니다.");
         }
     });
+
 
     //목표 예산추가 이벤트 리스너
     document.getElementById("addGoalButton").addEventListener("click", async () => {
