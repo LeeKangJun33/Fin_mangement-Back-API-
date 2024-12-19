@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +39,15 @@ public class BudgetGoalController {
         }
 
         // 날짜 변환 및 유효성 검사
-        LocalDate startDate = LocalDate.parse(request.getStartDate());
-        LocalDate endDate = LocalDate.parse(request.getEndDate());
+        LocalDate startDate;
+        LocalDate endDate;
+        try{
+            startDate = LocalDate.parse(request.getStartDate());
+            endDate = LocalDate.parse(request.getEndDate());
+        }catch (DateTimeParseException e){
+            return ResponseEntity.badRequest().body("날짜 형식이 잘못되었습니다. yyyy-MM-dd 형식으로 입력해주세요.");
+        }
+
         if (startDate.isAfter(endDate)) {
             return ResponseEntity.badRequest().body("시작 날짜는 종료 날짜 이전이어야 합니다.");
         }
@@ -71,19 +79,41 @@ public class BudgetGoalController {
     //목표수정
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<BudgetGoal> updateBudgetGoal(@PathVariable Long id, @RequestBody BudgetGoalRequestDTO request) {
-        LocalDate startDate = LocalDate.parse(request.getStartDate());
-        LocalDate endDate = LocalDate.parse(request.getEndDate());
+    public ResponseEntity<?> updateBudgetGoal(@PathVariable Long id, @RequestBody BudgetGoalRequestDTO request, Principal principal) {
+        String username = principal.getName();
 
-        BudgetGoal updatedGoal = BudgetGoal.builder()
-                .description(request.getName())
-                .targetAmount(request.getAmount())
-                .startDate(startDate)
-                .endDate(endDate)
-                .build();
+        // 날짜 변환 및 유효성 검사
+        LocalDate startDate;
+        LocalDate endDate;
+        try {
+            startDate = LocalDate.parse(request.getStartDate());
+            endDate = LocalDate.parse(request.getEndDate());
+        } catch (DateTimeParseException e) {
+            return ResponseEntity.badRequest().body("날짜 형식이 잘못되었습니다. yyyy-MM-dd 형식으로 입력해주세요.");
+        }
 
-        BudgetGoal result = budgetGoalService.updateBudgetGoal(id, updatedGoal);
-        return ResponseEntity.ok(result);
+        if (startDate.isAfter(endDate)) {
+            return ResponseEntity.badRequest().body("시작 날짜는 종료 날짜 이전이어야 합니다.");
+        }
+
+        // 기존 목표 가져오기 및 권한 확인
+        BudgetGoal goal = budgetGoalService.getGoalById(id);
+        if (goal == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("목표를 찾을 수 없습니다.");
+        }
+
+        if (!goal.getUsername().equals(username)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("본인의 목표만 수정할 수 있습니다.");
+        }
+
+        // 목표 수정
+        goal.setDescription(request.getName());
+        goal.setTargetAmount(request.getAmount());
+        goal.setStartDate(startDate);
+        goal.setEndDate(endDate);
+
+        BudgetGoal updatedGoal = budgetGoalService.save(goal);
+        return ResponseEntity.ok(updatedGoal);
     }
 
     @DeleteMapping("/{id}")
