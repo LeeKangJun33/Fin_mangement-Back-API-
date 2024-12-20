@@ -22,7 +22,7 @@ public class BudgetGoal {
     private String username;
 
     @Column(nullable = false)
-    private double targetAmount;
+    private BigDecimal  targetAmount;
 
     @Column(nullable = false)
     private LocalDate startDate;

@@ -187,11 +187,11 @@
         renderTable(data, tableId, goal => `
             <tr>
                 <td>${goal.id}</td>
-            <td>${goal.description}</td>
-            <td>${goal.start_date || '-'}</td>
-            <td>${goal.end_date || '-'}</td>
-            <td>${goal.target_amount ? goal.target_amount.toLocaleString() + '원' : '0원'}</td>
-            <td>${goal.username || '-'}</td>
+                <td>${goal.description}</td>
+                <td>${goal.start_date || '- '}</td>
+                <td>${goal.end_date || '- '}</td>
+                <td>${goal.target_amount ? goal.target_amount.toLocaleString() + '원' : '0원'}</td>
+                <td>${goal.username || '- '}</td>
             </tr>
         `);
     }
@@ -326,8 +326,6 @@
             alert(`추가 실패: ${error.message}`);
         }
     });
-
-
     //거래내역추가 이벤트 리스너
     document.getElementById("addTransactionButton").addEventListener("click", async () => {
         const description = document.getElementById("transactionDescription").value;

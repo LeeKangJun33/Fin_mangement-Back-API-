@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,22 +16,13 @@ public class BudgetGoalService {
     private final BudgetGoalRepositoy budgetGoalRepositoy;
 
     // 목표 저장
-    public void save(BudgetGoal budgetGoal) {
+    public BudgetGoal save(BudgetGoal budgetGoal) {
         if (budgetGoal == null) {
-            throw new IllegalArgumentException("BudgetGoal 객체는 null일 수 없습니다");
+            throw new IllegalArgumentException("BudgetGoal 객체는 null일 수 없습니다.");
         }
-
-        // 금액 유효성 검사
-        if (budgetGoal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("목표 금액은 0보다 커야 합니다.");
-        }
-
-        // 날짜 유효성 검사
-        if (budgetGoal.getStartDate().isAfter(budgetGoal.getEndDate())) {
-            throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 이전이어야 합니다.");
-        }
-
-        budgetGoalRepositoy.save(budgetGoal);
+        validateBudgetGoalDates(budgetGoal.getStartDate(), budgetGoal.getEndDate());
+        validateTargetAmount(budgetGoal.getTargetAmount());
+        return budgetGoalRepositoy.save(budgetGoal);
     }
 
     // 사용자별 목표 조회
@@ -44,30 +34,21 @@ public class BudgetGoalService {
     }
 
     // 목표 수정
-    public BudgetGoal updateBudgetGoal(Long id, BudgetGoal updateGoal) {
-        if (id == null || updateGoal == null) {
-            throw new IllegalArgumentException("id와 updateGoal은 null일 수 없습니다.");
+    public BudgetGoal updateBudgetGoal(Long id, BudgetGoal updatedGoal) {
+        if (id == null || updatedGoal == null) {
+            throw new IllegalArgumentException("id와 updatedGoal은 null일 수 없습니다.");
         }
 
-        // 기존 목표 조회
         BudgetGoal existingGoal = budgetGoalRepositoy.findById(id)
                 .orElseThrow(() -> new RuntimeException("ID " + id + "에 해당하는 목표를 찾을 수 없습니다."));
 
-        // 금액 유효성 검사
-        if (updateGoal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("목표 금액은 0보다 커야 합니다.");
-        }
+        validateBudgetGoalDates(updatedGoal.getStartDate(), updatedGoal.getEndDate());
+        validateTargetAmount(updatedGoal.getTargetAmount());
 
-        // 날짜 유효성 검사
-        if (updateGoal.getStartDate().isAfter(updateGoal.getEndDate())) {
-            throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 이전이어야 합니다.");
-        }
-
-        // 목표 수정
-        existingGoal.setTargetAmount(updateGoal.getTargetAmount());
-        existingGoal.setStartDate(updateGoal.getStartDate());
-        existingGoal.setEndDate(updateGoal.getEndDate());
-        existingGoal.setDescription(updateGoal.getDescription());
+        existingGoal.setTargetAmount(updatedGoal.getTargetAmount());
+        existingGoal.setStartDate(updatedGoal.getStartDate());
+        existingGoal.setEndDate(updatedGoal.getEndDate());
+        existingGoal.setDescription(updatedGoal.getDescription());
 
         return budgetGoalRepositoy.save(existingGoal);
     }
@@ -83,5 +64,22 @@ public class BudgetGoalService {
         }
 
         budgetGoalRepositoy.deleteById(id);
+    }
+
+    // 목표 금액 검증
+    private void validateTargetAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("목표 금액은 null이거나 0 이하일 수 없습니다.");
+        }
+    }
+
+    // 목표 날짜 검증
+    private void validateBudgetGoalDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("시작 날짜와 종료 날짜는 null일 수 없습니다.");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("시작 날짜는 종료 날짜보다 늦을 수 없습니다.");
+        }
     }
 }
